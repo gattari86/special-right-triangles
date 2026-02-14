@@ -557,6 +557,173 @@ function MysteryImage({ solvedCount }) {
   );
 }
 
+// ─── Pixel Rex ──────────────────────────────────────────────────────────────
+// 16x16 pixel grid: 0=empty, 1=body(green), 2=dark(outline), 3=belly, 4=eye, 5=mouth
+const REX_IDLE = [
+  [0,0,0,0,0,0,0,2,2,2,2,0,0,0,0,0],
+  [0,0,0,0,0,0,2,1,1,1,1,2,0,0,0,0],
+  [0,0,0,0,0,0,2,1,4,1,1,2,0,0,0,0],
+  [0,0,0,0,0,0,2,1,1,1,1,2,0,0,0,0],
+  [0,0,0,0,0,0,2,1,5,5,2,0,0,0,0,0],
+  [0,0,0,0,0,2,2,1,1,2,0,0,0,0,0,0],
+  [0,0,0,0,2,1,1,1,1,2,0,0,0,0,0,0],
+  [0,0,0,0,2,1,3,3,1,2,0,0,0,0,0,0],
+  [0,0,0,0,2,1,3,3,1,1,2,0,0,0,0,0],
+  [0,0,0,2,1,1,1,1,1,2,0,0,0,0,0,0],
+  [0,0,0,2,1,1,1,1,1,2,0,0,0,0,0,0],
+  [0,0,0,0,2,1,1,1,2,0,0,0,0,0,0,0],
+  [0,0,0,0,2,1,2,1,2,0,0,0,0,0,0,0],
+  [0,0,0,0,2,1,2,1,2,0,0,0,0,0,0,0],
+  [0,0,0,0,2,2,0,2,2,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+];
+
+const REX_DANCE_1 = [
+  [0,0,0,0,0,0,0,0,2,2,2,2,0,0,0,0],
+  [0,0,0,0,0,0,0,2,1,1,1,1,2,0,0,0],
+  [0,0,0,0,0,0,0,2,1,4,1,1,2,0,0,0],
+  [0,0,0,0,0,0,0,2,1,1,1,1,2,0,0,0],
+  [0,0,0,0,0,0,0,2,1,5,5,2,0,0,0,0],
+  [0,0,2,2,0,0,2,2,1,1,2,0,0,0,0,0],
+  [0,0,0,2,1,2,1,1,1,1,2,0,0,0,0,0],
+  [0,0,0,0,2,1,1,3,3,1,2,0,0,0,0,0],
+  [0,0,0,0,0,2,1,3,3,1,2,0,0,0,0,0],
+  [0,0,0,0,2,1,1,1,1,1,2,0,0,0,0,0],
+  [0,0,0,0,2,1,1,1,1,2,0,0,0,0,0,0],
+  [0,0,0,0,0,2,1,1,2,0,0,0,0,0,0,0],
+  [0,0,0,0,2,1,2,0,2,1,2,0,0,0,0,0],
+  [0,0,0,0,2,2,0,0,0,2,2,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+];
+
+const REX_DANCE_2 = [
+  [0,0,0,0,0,2,2,2,2,0,0,0,0,0,0,0],
+  [0,0,0,0,2,1,1,1,1,2,0,0,0,0,0,0],
+  [0,0,0,0,2,1,1,4,1,2,0,0,0,0,0,0],
+  [0,0,0,0,2,1,1,1,1,2,0,0,0,0,0,0],
+  [0,0,0,0,0,2,5,5,1,2,0,0,0,0,0,0],
+  [0,0,0,0,0,2,1,1,2,2,0,0,2,2,0,0],
+  [0,0,0,0,0,2,1,1,1,1,2,1,2,0,0,0],
+  [0,0,0,0,0,2,1,3,3,1,1,2,0,0,0,0],
+  [0,0,0,0,0,2,1,3,3,1,2,0,0,0,0,0],
+  [0,0,0,0,0,2,1,1,1,1,1,2,0,0,0,0],
+  [0,0,0,0,0,0,2,1,1,1,1,2,0,0,0,0],
+  [0,0,0,0,0,0,0,2,1,1,2,0,0,0,0,0],
+  [0,0,0,0,0,2,1,2,0,2,1,2,0,0,0,0],
+  [0,0,0,0,0,2,2,0,0,0,2,2,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+];
+
+const REX_DANCE_3 = [
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,2,2,2,2,0,0,0,0,0],
+  [0,0,0,0,0,0,2,1,1,1,1,2,0,0,0,0],
+  [0,0,0,0,0,0,2,1,4,1,1,2,0,0,0,0],
+  [0,0,0,0,0,0,2,1,1,1,1,2,0,0,0,0],
+  [0,0,0,0,0,0,2,1,5,5,2,0,0,0,0,0],
+  [0,0,0,0,2,2,2,1,1,2,2,2,0,0,0,0],
+  [0,0,0,2,1,0,2,1,3,1,0,1,2,0,0,0],
+  [0,0,0,0,0,0,2,1,3,1,2,0,0,0,0,0],
+  [0,0,0,0,0,2,1,1,1,1,2,0,0,0,0,0],
+  [0,0,0,0,0,2,1,1,1,1,2,0,0,0,0,0],
+  [0,0,0,0,0,0,2,1,1,2,0,0,0,0,0,0],
+  [0,0,0,0,0,2,1,0,1,1,2,0,0,0,0,0],
+  [0,0,0,0,0,2,2,0,0,2,2,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+];
+
+const REX_COLORS = {
+  0: "transparent",
+  1: "#44dd66",  // body green
+  2: "#1a5c2a",  // dark outline
+  3: "#88eea0",  // belly highlight
+  4: "#ffffff",  // eye
+  5: "#ff6688",  // mouth/tongue
+};
+
+const DANCE_FRAMES = [REX_IDLE, REX_DANCE_1, REX_DANCE_3, REX_DANCE_2, REX_DANCE_3, REX_DANCE_1];
+
+function PixelRex({ dancing }) {
+  const [frame, setFrame] = useState(0);
+  const intervalRef = useRef(null);
+
+  useEffect(() => {
+    if (dancing) {
+      setFrame(0);
+      let f = 0;
+      intervalRef.current = setInterval(() => {
+        f = (f + 1) % DANCE_FRAMES.length;
+        setFrame(f);
+      }, 220);
+    } else {
+      clearInterval(intervalRef.current);
+      setFrame(0);
+    }
+    return () => clearInterval(intervalRef.current);
+  }, [dancing]);
+
+  const grid = dancing ? DANCE_FRAMES[frame] : REX_IDLE;
+  const px = 6; // pixel size
+
+  return (
+    <div style={{
+      display: "inline-block",
+      position: "relative",
+    }}>
+      <svg
+        width={16 * px}
+        height={16 * px}
+        viewBox={`0 0 ${16 * px} ${16 * px}`}
+        style={{
+          imageRendering: "pixelated",
+          animation: dancing ? "rexBounce 0.44s ease-in-out infinite" : "rexIdle 2s ease-in-out infinite",
+          filter: dancing ? "drop-shadow(0 0 8px rgba(68,221,102,0.6))" : "drop-shadow(0 0 4px rgba(68,221,102,0.2))",
+          transition: "filter 0.3s",
+        }}
+      >
+        {grid.map((row, y) =>
+          row.map((cell, x) =>
+            cell !== 0 ? (
+              <rect
+                key={`${y}-${x}`}
+                x={x * px}
+                y={y * px}
+                width={px}
+                height={px}
+                fill={REX_COLORS[cell]}
+              />
+            ) : null
+          )
+        )}
+      </svg>
+      {dancing && (
+        <>
+          {/* Music notes floating up */}
+          <div style={{
+            position: "absolute",
+            top: -8,
+            right: -12,
+            fontSize: 14,
+            animation: "noteFloat1 0.8s ease-out infinite",
+            pointerEvents: "none",
+          }}>♪</div>
+          <div style={{
+            position: "absolute",
+            top: -4,
+            left: -8,
+            fontSize: 12,
+            animation: "noteFloat2 1s ease-out infinite 0.3s",
+            pointerEvents: "none",
+          }}>♫</div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ─── Level System ───────────────────────────────────────────────────────────
 function getLevel(solved) {
   if (solved >= 16) return { title: "TRIANGLE LEGEND", emoji: "👑", color: "#ffcc00" };
@@ -878,6 +1045,7 @@ export default function App() {
   const [shuffled, setShuffled] = useState(false);
   const [problemOrder, setProblemOrder] = useState(PROBLEMS.map((_, i) => i));
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [rexDancing, setRexDancing] = useState(false);
 
   useEffect(() => {
     saveProgress(solved, score, bestStreak);
@@ -999,6 +1167,22 @@ export default function App() {
         @keyframes rainbowShift {
           0% { filter: hue-rotate(0deg); }
           100% { filter: hue-rotate(360deg); }
+        }
+        @keyframes rexBounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-6px); }
+        }
+        @keyframes rexIdle {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-2px); }
+        }
+        @keyframes noteFloat1 {
+          0% { opacity: 1; transform: translateY(0) rotate(0deg); }
+          100% { opacity: 0; transform: translateY(-20px) rotate(15deg); }
+        }
+        @keyframes noteFloat2 {
+          0% { opacity: 1; transform: translateY(0) rotate(0deg); }
+          100% { opacity: 0; transform: translateY(-24px) rotate(-10deg); }
         }
         .problem-card {
           cursor: default;
@@ -1214,6 +1398,36 @@ export default function App() {
               🔄 Reset
             </button>
           )}
+        </div>
+
+        {/* Rex Dance */}
+        <div style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 8,
+          marginTop: 8,
+        }}>
+          <PixelRex dancing={rexDancing} />
+          <button
+            onClick={() => setRexDancing(d => !d)}
+            style={{
+              background: rexDancing
+                ? "linear-gradient(135deg, #44dd66, #00aa44)"
+                : "rgba(68,221,102,0.1)",
+              border: `1px solid ${rexDancing ? "#44dd66" : "rgba(68,221,102,0.3)"}`,
+              borderRadius: 8,
+              padding: "5px 14px",
+              color: rexDancing ? "#0d1117" : "#44dd66",
+              fontSize: 11,
+              fontWeight: 700,
+              fontFamily: "monospace",
+              cursor: "pointer",
+              transition: "all 0.2s",
+            }}
+          >
+            {rexDancing ? "🦖 Rex is vibing!" : "🦖 Make Rex Dance"}
+          </button>
         </div>
 
         {showResetConfirm && (
