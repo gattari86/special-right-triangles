@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, memo } from "react";
 
 // ─── Sound System (Web Audio API — zero dependencies) ───────────────────────
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -169,19 +169,22 @@ function RadicalDisplay({ value, style = {} }) {
 
 // ─── Confetti ───────────────────────────────────────────────────────────────
 function Confetti({ active }) {
+  const particles = useRef(null);
+  if (!particles.current) {
+    particles.current = Array.from({ length: 80 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      delay: Math.random() * 2,
+      duration: 2 + Math.random() * 2,
+      color: ["#00f0ff", "#ff00aa", "#ffcc00", "#00ff88", "#ff6644", "#aa66ff"][i % 6],
+      size: 4 + Math.random() * 10,
+      rotation: Math.random() * 360,
+    }));
+  }
   if (!active) return null;
-  const particles = Array.from({ length: 80 }, (_, i) => ({
-    id: i,
-    x: Math.random() * 100,
-    delay: Math.random() * 2,
-    duration: 2 + Math.random() * 2,
-    color: ["#00f0ff", "#ff00aa", "#ffcc00", "#00ff88", "#ff6644", "#aa66ff"][i % 6],
-    size: 4 + Math.random() * 10,
-    rotation: Math.random() * 360,
-  }));
   return (
     <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 9999 }}>
-      {particles.map(p => (
+      {particles.current.map(p => (
         <div key={p.id} style={{
           position: "absolute",
           left: `${p.x}%`,
@@ -199,24 +202,25 @@ function Confetti({ active }) {
 }
 
 // ─── Mini Confetti (per-card solve burst) ───────────────────────────────────
+const MINI_PARTICLES = Array.from({ length: 20 }, (_, i) => {
+  const angle = (i / 20) * 360;
+  const rad = (angle * Math.PI) / 180;
+  const distance = 30 + Math.random() * 40;
+  return {
+    id: i,
+    tx: Math.cos(rad) * distance,
+    ty: Math.sin(rad) * distance,
+    color: ["#00f0ff", "#ff00aa", "#ffcc00", "#00ff88"][i % 4],
+    size: 3 + Math.random() * 4,
+    delay: Math.random() * 0.2,
+  };
+});
+
 function MiniConfetti({ active }) {
   if (!active) return null;
-  const particles = Array.from({ length: 20 }, (_, i) => {
-    const angle = (i / 20) * 360;
-    const rad = (angle * Math.PI) / 180;
-    const distance = 30 + Math.random() * 40;
-    return {
-      id: i,
-      tx: Math.cos(rad) * distance,
-      ty: Math.sin(rad) * distance,
-      color: ["#00f0ff", "#ff00aa", "#ffcc00", "#00ff88"][i % 4],
-      size: 3 + Math.random() * 4,
-      delay: Math.random() * 0.2,
-    };
-  });
   return (
     <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 10, overflow: "hidden" }}>
-      {particles.map(p => (
+      {MINI_PARTICLES.map(p => (
         <div key={p.id} style={{
           position: "absolute",
           left: "50%",
@@ -301,9 +305,13 @@ function Triangle4590({ given, find, isCorrect }) {
       </text>
       {labels.bottom !== "?" && <RadicalSVG value={labels.bottom} x={(p1.x + p2.x) / 2} y={p1.y + 18} />}
 
-      <text x={p1.x - 18} y={(p1.y + p3.y) / 2 + 4} fill="#e0e8f0" fontSize="13" fontWeight="600" textAnchor="middle" fontFamily="monospace" transform={`rotate(-90, ${p1.x - 18}, ${(p1.y + p3.y) / 2 + 4})`}>
-        {labels.left === "?" ? "?" : ""}
-      </text>
+      {labels.left === "?" ? (
+        <text x={p1.x - 18} y={(p1.y + p3.y) / 2 + 4} fill={accentColor} fontSize="16" fontWeight="800" textAnchor="middle" fontFamily="monospace" transform={`rotate(-90, ${p1.x - 18}, ${(p1.y + p3.y) / 2 + 4})`}>?</text>
+      ) : labels.left ? (
+        <g transform={`translate(${p1.x - 18}, ${(p1.y + p3.y) / 2 + 4}) rotate(-90)`}>
+          <RadicalSVG value={labels.left} x={0} y={0} />
+        </g>
+      ) : null}
 
       <g transform={`translate(${(p2.x + p3.x) / 2 + 12}, ${(p2.y + p3.y) / 2 - 2})`}>
         <RadicalSVG value={labels.hyp === "?" ? null : labels.hyp} x={0} y={0} color={labels.hyp === "?" ? accentColor : "#e0e8f0"} />
@@ -604,9 +612,10 @@ function StreakBadge({ streak, bestStreak }) {
 }
 
 // ─── Problem Card ───────────────────────────────────────────────────────────
-function ProblemCard({ problem, index, solved, onSolve }) {
+function ProblemCard({ problem, index, solved, onSolve, onWrongAnswer }) {
   const [input, setInput] = useState("");
   const [status, setStatus] = useState(null);
+  const [focused, setFocused] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [shake, setShake] = useState(false);
   const [showMiniConfetti, setShowMiniConfetti] = useState(false);
@@ -617,7 +626,14 @@ function ProblemCard({ problem, index, solved, onSolve }) {
   const isSolved = solved.has(problem.id);
 
   const handleSubmit = () => {
-    if (isSolved || !input.trim()) return;
+    if (isSolved) return;
+    if (!input.trim()) {
+      // Flash the input border to signal "type something"
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+      inputRef.current?.focus();
+      return;
+    }
     const correct = checkAnswer(input.trim(), problem.answer);
     if (correct) {
       setStatus("correct");
@@ -631,6 +647,7 @@ function ProblemCard({ problem, index, solved, onSolve }) {
       setShake(true);
       setAttempts(prev => prev + 1);
       playWrongSound();
+      onWrongAnswer();
       setTimeout(() => setShake(false), 500);
       setTimeout(() => setStatus(null), 1500);
     }
@@ -642,6 +659,7 @@ function ProblemCard({ problem, index, solved, onSolve }) {
 
   const difficultyStars = "★".repeat(problem.difficulty) + "☆".repeat(4 - problem.difficulty);
   const accentColor = isSolved ? "#00ff88" : status === "wrong" ? "#ff4466" : "#00f0ff";
+  const borderColor = status === "wrong" ? "#ff4466" : focused ? "#00f0ff" : "rgba(0,240,255,0.25)";
   const pointsValue = POINTS_MAP[problem.difficulty];
   const TriangleComponent = problem.type === "45-45-90" ? Triangle4590 : Triangle3060;
 
@@ -758,11 +776,18 @@ function ProblemCard({ problem, index, solved, onSolve }) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
               placeholder="e.g. 4sqrt(3)"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="false"
+              aria-label={`Answer for problem ${index + 1}: find the ${problem.find}`}
               style={{
                 flex: 1,
                 background: "rgba(0,0,0,0.4)",
-                border: `1.5px solid ${status === "wrong" ? "#ff4466" : "rgba(0,240,255,0.25)"}`,
+                border: `1.5px solid ${borderColor}`,
                 borderRadius: 8,
                 padding: "8px 12px",
                 color: "#e0e8f0",
@@ -772,12 +797,11 @@ function ProblemCard({ problem, index, solved, onSolve }) {
                 transition: "border-color 0.3s",
                 minWidth: 0,
               }}
-              onFocus={(e) => e.target.style.borderColor = "#00f0ff"}
-              onBlur={(e) => e.target.style.borderColor = "rgba(0,240,255,0.25)"}
             />
             <button
               onClick={handleSubmit}
               className="go-btn"
+              aria-label="Submit answer"
               style={{
                 background: "linear-gradient(135deg, #00f0ff, #00aa88)",
                 border: "none",
@@ -882,12 +906,19 @@ export default function App() {
       const totalPoints = basePoints + firstTryBonus + streakBonus;
       setScore(s => s + totalPoints);
 
-      if (newStreak > bestStreak) setBestStreak(newStreak);
+      setBestStreak(best => {
+        const newBest = Math.max(best, newStreak);
+        return newBest;
+      });
       if (newStreak >= 3) playStreakSound(newStreak);
       else playCorrectSound();
       return newStreak;
     });
-  }, [bestStreak]);
+  }, []);
+
+  const handleWrongAnswer = useCallback(() => {
+    setStreak(0);
+  }, []);
 
   const handleShuffle = () => {
     if (shuffled) {
@@ -971,10 +1002,14 @@ export default function App() {
         }
         .problem-card {
           cursor: default;
+          will-change: transform;
         }
         .problem-card:hover {
-          transform: translateY(-2px);
           box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        /* Only apply hover lift when not animating */
+        .problem-card:not([style*="shakeCard"]):not([style*="solvedPulse"]):hover {
+          transform: translateY(-2px);
         }
         .go-btn:hover {
           transform: scale(1.05);
@@ -983,7 +1018,8 @@ export default function App() {
         .go-btn:active {
           transform: scale(0.95);
         }
-        * { box-sizing: border-box; }
+        button { -webkit-tap-highlight-color: transparent; }
+        input { -webkit-tap-highlight-color: transparent; }
         input::placeholder { color: rgba(136,153,170,0.5); }
         @media (max-width: 480px) {
           .problem-card { padding: 16px 12px 12px !important; }
@@ -1099,7 +1135,13 @@ export default function App() {
         </div>
 
         {/* Progress bar */}
-        <div style={{
+        <div
+          role="progressbar"
+          aria-valuenow={solved.size}
+          aria-valuemin={0}
+          aria-valuemax={16}
+          aria-label={`Progress: ${solved.size} of 16 problems solved`}
+          style={{
           position: "relative",
           height: 14,
           background: "rgba(0,240,255,0.08)",
@@ -1284,6 +1326,7 @@ export default function App() {
                   index={orderIdx}
                   solved={solved}
                   onSolve={handleSolve}
+                  onWrongAnswer={handleWrongAnswer}
                 />
               </div>
             );
